@@ -61,6 +61,8 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
 
     val date = mainViewModel.todayDate.collectAsState()
 
+    val currenciesList = mainViewModel.allCurrencies.collectAsState()
+
     val datePickerDialog = DatePickerDialog(
         context,
         { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
@@ -74,7 +76,7 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
     }
 
     var fromCurrency by rememberSaveable {
-        mutableStateOf(mainViewModel.currencies[0])
+        mutableStateOf(mainViewModel.currencies.joinToString(", "))
     }
 
     var isExpandedToCurrency by rememberSaveable {
@@ -111,7 +113,7 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
                 expanded = isExpandedFromCurrency,
                 onDismissRequest = { isExpandedFromCurrency = false }
             ) {
-                mainViewModel.currencies.forEach {
+                currenciesList.value.forEach {
                     DropdownMenuItem(
                         text = { Text(text = it) },
                         onClick = {
@@ -140,7 +142,7 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
                 expanded = isExpandedToCurrency,
                 onDismissRequest = { isExpandedToCurrency = false }
             ) {
-                mainViewModel.currencies
+                currenciesList.value
                     .filter { it != fromCurrency }
                     .forEach {
                         DropdownMenuItem(
