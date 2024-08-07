@@ -5,6 +5,7 @@ package com.landa.currencyconverter.presentation
 import android.app.DatePickerDialog
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.widget.DatePicker
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,7 +26,6 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -87,20 +87,17 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
         mutableStateOf(false)
     }
 
-    var toCurrency by rememberSaveable {
-        mutableStateOf(listOf(""))
+    val toCurrencyEmpty by rememberSaveable {
+        mutableStateOf(listOf("All"))
     }
 
-    val selectedToCurrency = remember {
-        mutableStateListOf<String>()
-    }
+    val selectedToCurrencies = remember { mutableStateListOf<String>() }
 
-
-    toCurrency = if (currenciesList.value.count() > 1) currenciesList.value.map {
-        it.substring(0, 3)
-    }
-    else currenciesList.value
-
+//    toCurrency = if (currenciesList.value.count() > 1) currenciesList.value.map {
+//        it.substring(0, 3)
+//    }
+//    else currenciesList.value
+// Общая колонка
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -108,11 +105,15 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.Start,
     ) {
+// Название экрана
         Text(text = "Currency Exchange")
+// Название выпадающего списка FROM CURRENCY
         Text(text = "From Currency")
+// Бокс выпадающего списка FROM CURRENCY
         ExposedDropdownMenuBox(
             expanded = false,
             onExpandedChange = { isExpandedFromCurrency = it }) {
+// Текст внутри бокса выпадающего списка FROM CURRENCY
             TextField(
                 value = fromCurrency,
                 onValueChange = {},
@@ -123,6 +124,7 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
                 colors = ExposedDropdownMenuDefaults.textFieldColors(),
                 modifier = Modifier.menuAnchor()
             )
+// Выпадающий список FROM CURRENCY
             ExposedDropdownMenu(
                 expanded = isExpandedFromCurrency,
                 onDismissRequest = { isExpandedFromCurrency = false },
@@ -130,9 +132,10 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
             ) {
                 currenciesList.value
                     .filter {
-                        !toCurrency.contains(it)
+                        !toCurrencyEmpty.contains(it)
                     }
                     .forEach {
+// Элемент выпадающего списка FROM CURRENCY
                         DropdownMenuItem(
                             text = { Text(text = it) },
                             onClick = {
@@ -143,12 +146,22 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
                     }
             }
         }
+// Название выпадающего списка TO CURRENCY
         Text(text = "To Currency")
+// Бокс выпадающего списка TO CURRENCY
         ExposedDropdownMenuBox(
             expanded = false,
             onExpandedChange = { isExpandedToCurrency = it }) {
+// Текст внутри бокса выпадающего списка TO CURRENCY
             TextField(
-                value = toCurrency.joinToString(", "),
+                value = if (selectedToCurrencies.isEmpty()) {
+                    Log.i("INSIDE BOX DROPDOWNMENU TOCURRENCY", "IF")
+                    toCurrencyEmpty.joinToString("")
+                }
+                else {
+                    Log.i("INSIDE BOX DROPDOWNMENU TOCURRENCY", "ELSE")
+                    selectedToCurrencies.joinToString(", ")
+                },
                 onValueChange = {},
                 readOnly = true,
                 trailingIcon = {
@@ -157,6 +170,7 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
                 colors = ExposedDropdownMenuDefaults.textFieldColors(),
                 modifier = Modifier.menuAnchor()
             )
+// Выпадающий список TO CURRENCY
             ExposedDropdownMenu(
                 expanded = isExpandedToCurrency,
                 onDismissRequest = { isExpandedToCurrency = false },
@@ -166,21 +180,31 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
                     .filter { it != fromCurrency }
                     .forEach {
                         DropdownMenuItem(
+// Элемент выпадающего списка TO CURRENCY
                             text = { Text(text = it) },
                             onClick = {
-                                val shortCut = it
-                                if(it in selectedToCurrency)
-                                selectedToCurrency.remove(it)
-                                else selectedToCurrency.add(it)
-                                isExpandedToCurrency = false
+                                val shortCut = it.removeRange(3, it.count())
+                                if (shortCut in selectedToCurrencies) {
+                                    Log.i("ITEM DROPDOWNMENU TOCURRENCY", "IF")
+                                    selectedToCurrencies.remove(shortCut)
+                                }
+                                else {
+                                    Log.i("ITEM DROPDOWNMENU TOCURRENCY", "ELSE")
+                                    selectedToCurrencies.add(shortCut)
+                                }
+                                isExpandedToCurrency = true
                             }
                         )
                     }
             }
         }
+// Тайтл поля AMOUNT
         Text(text = "Amount")
+// Текст поля AMOUNT
         TextField(value = "1", onValueChange = {}, readOnly = false)
+// Тайтл поля DATE
         Text(text = "Date")
+// Бокс открытия календаря DATE
         ExposedDropdownMenuBox(
             expanded = false,
             onExpandedChange = { },
@@ -190,19 +214,17 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
                 .height(40.dp)
                 .background(Color.Gray)
         ) {
+// Текст поля DATE
             Text(
                 text = date.value,
                 modifier = Modifier
                     .padding(12.dp)
             )
         }
+// Кнопка CONVERT
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = { }
         ) { }
     }
-}
-
-fun FromCurrency() {
-
 }
