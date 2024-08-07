@@ -9,11 +9,14 @@ class ApiCurrencyRepository : CurrencyRepository {
 
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://www.frankfurter.app")
-        .addConverterFactory(GsonConverterFactory.create()).build()
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
     private val apiCurrency = retrofit.create(ApiCurrency::class.java)
-
     override suspend fun getCurrenciesList(): List<String> {
-        return apiCurrency.getCurrenciesList()
+        val currencyList = apiCurrency.getCurrenciesMap().map {
+            "${it.key}=${it.value}"
+        }
+        return currencyList
     }
 
 

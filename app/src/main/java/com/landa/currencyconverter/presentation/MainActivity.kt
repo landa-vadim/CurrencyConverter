@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,10 +25,13 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -76,7 +80,7 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
     }
 
     var fromCurrency by rememberSaveable {
-        mutableStateOf(mainViewModel.currencies.joinToString(", "))
+        mutableStateOf("EUR")
     }
 
     var isExpandedToCurrency by rememberSaveable {
@@ -84,8 +88,18 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
     }
 
     var toCurrency by rememberSaveable {
-        mutableStateOf(mainViewModel.currencies.joinToString(", "))
+        mutableStateOf(listOf(""))
     }
+
+    val selectedToCurrency = remember {
+        mutableStateListOf<String>()
+    }
+
+
+    toCurrency = if (currenciesList.value.count() > 1) currenciesList.value.map {
+        it.substring(0, 3)
+    }
+    else currenciesList.value
 
     Column(
         modifier = Modifier
@@ -111,17 +125,22 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
             )
             ExposedDropdownMenu(
                 expanded = isExpandedFromCurrency,
-                onDismissRequest = { isExpandedFromCurrency = false }
+                onDismissRequest = { isExpandedFromCurrency = false },
+                modifier = Modifier.fillMaxHeight(0.4F)
             ) {
-                currenciesList.value.forEach {
-                    DropdownMenuItem(
-                        text = { Text(text = it) },
-                        onClick = {
-                            fromCurrency = it
-                            isExpandedFromCurrency = false
-                        }
-                    )
-                }
+                currenciesList.value
+                    .filter {
+                        !toCurrency.contains(it)
+                    }
+                    .forEach {
+                        DropdownMenuItem(
+                            text = { Text(text = it) },
+                            onClick = {
+                                fromCurrency = it.removeRange(3, it.count())
+                                isExpandedFromCurrency = false
+                            },
+                        )
+                    }
             }
         }
         Text(text = "To Currency")
@@ -129,7 +148,7 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
             expanded = false,
             onExpandedChange = { isExpandedToCurrency = it }) {
             TextField(
-                value = toCurrency,
+                value = toCurrency.joinToString(", "),
                 onValueChange = {},
                 readOnly = true,
                 trailingIcon = {
@@ -140,7 +159,8 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
             )
             ExposedDropdownMenu(
                 expanded = isExpandedToCurrency,
-                onDismissRequest = { isExpandedToCurrency = false }
+                onDismissRequest = { isExpandedToCurrency = false },
+                modifier = Modifier.fillMaxHeight(0.4F)
             ) {
                 currenciesList.value
                     .filter { it != fromCurrency }
@@ -148,7 +168,10 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
                         DropdownMenuItem(
                             text = { Text(text = it) },
                             onClick = {
-                                toCurrency = it
+                                val shortCut = it
+                                if(it in selectedToCurrency)
+                                selectedToCurrency.remove(it)
+                                else selectedToCurrency.add(it)
                                 isExpandedToCurrency = false
                             }
                         )
@@ -178,4 +201,8 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
             onClick = { }
         ) { }
     }
+}
+
+fun FromCurrency() {
+
 }

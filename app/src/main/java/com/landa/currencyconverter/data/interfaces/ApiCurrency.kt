@@ -5,9 +5,6 @@ import retrofit2.http.GET
 interface ApiCurrency {
 
     @GET("/currencies")
-    suspend fun getCurrenciesList(): List<String>
-
-
-
+    suspend fun getCurrenciesMap(): Map<String, String>
 
 }
