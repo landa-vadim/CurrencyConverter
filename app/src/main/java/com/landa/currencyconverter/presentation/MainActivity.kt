@@ -13,12 +13,15 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,25 +40,42 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.landa.currencyconverter.presentation.viewmodel.MainViewModel
 import java.util.Calendar
 import java.util.Date
 
 class MainActivity : ComponentActivity() {
 
-    val mainViewModel: MainViewModel by viewModels()
+    private val mainViewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MainPage(this, mainViewModel)
+            MyApp(this, mainViewModel)
         }
     }
 }
 
 @Composable
-fun MainPage(context: Context, mainViewModel: MainViewModel) {
+fun MyApp(context: Context, mainViewModel: MainViewModel) {
+    val navController = rememberNavController()
+    NavHost(
+        navController = navController,
+        startDestination = "main_screen"
+    ) {
+        composable("main_screen") { MainPage(context, mainViewModel, navController) }
+        composable("convert_result_screen") { ConvertResult() }
+    }
+}
+
+@Composable
+fun MainPage(context: Context, mainViewModel: MainViewModel, navController: NavController) {
 
     val calendar = Calendar.getInstance()
     calendar.time = Date()
@@ -93,10 +113,10 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
 
     val selectedToCurrencies = remember { mutableStateListOf<String>() }
 
-//    toCurrency = if (currenciesList.value.count() > 1) currenciesList.value.map {
-//        it.substring(0, 3)
-//    }
-//    else currenciesList.value
+    var amount by rememberSaveable {
+        mutableStateOf("")
+    }
+
 // Общая колонка
     Column(
         modifier = Modifier
@@ -157,8 +177,7 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
                 value = if (selectedToCurrencies.isEmpty()) {
                     Log.i("INSIDE BOX DROPDOWNMENU TOCURRENCY", "IF")
                     toCurrencyEmpty.joinToString("")
-                }
-                else {
+                } else {
                     Log.i("INSIDE BOX DROPDOWNMENU TOCURRENCY", "ELSE")
                     selectedToCurrencies.joinToString(", ")
                 },
@@ -187,8 +206,7 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
                                 if (shortCut in selectedToCurrencies) {
                                     Log.i("ITEM DROPDOWNMENU TOCURRENCY", "IF")
                                     selectedToCurrencies.remove(shortCut)
-                                }
-                                else {
+                                } else {
                                     Log.i("ITEM DROPDOWNMENU TOCURRENCY", "ELSE")
                                     selectedToCurrencies.add(shortCut)
                                 }
@@ -201,7 +219,10 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
 // Тайтл поля AMOUNT
         Text(text = "Amount")
 // Текст поля AMOUNT
-        TextField(value = "1", onValueChange = {}, readOnly = false)
+        TextField(
+            value = amount,
+            onValueChange = { amount = it },
+        )
 // Тайтл поля DATE
         Text(text = "Date")
 // Бокс открытия календаря DATE
@@ -224,7 +245,75 @@ fun MainPage(context: Context, mainViewModel: MainViewModel) {
 // Кнопка CONVERT
         Button(
             modifier = Modifier.fillMaxWidth(),
-            onClick = { }
-        ) { }
+            onClick = { navController.navigate("convert_result_screen") },
+            content = { Text(text = "Convert") }
+        )
     }
 }
+
+@Preview
+@Composable
+fun ConvertResult() {
+
+    Column {
+        Row(
+            modifier = Modifier
+                .background(Color.Gray)
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            Text(
+                modifier = Modifier
+                    .background(Color.Red),
+                text = "CurrencyExchange"
+            )
+        }
+        Row {
+            Column(
+                modifier = Modifier
+                    .background(Color.Red)
+                    .padding(12.dp)
+            ) {
+                Text(
+                    modifier = Modifier.padding(24.dp),
+                    text = "From Currency"
+                )
+                Text(
+                    modifier = Modifier.padding(24.dp),
+                    text = "To Currency"
+                )
+                Text(
+                    modifier = Modifier.padding(24.dp),
+                    text = "Date"
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .background(Color.Green)
+                    .padding(12.dp)
+            ) {
+                Text(
+                    modifier = Modifier.padding(24.dp),
+                    text = "USD"
+                )
+                Text(
+                    modifier = Modifier.padding(24.dp),
+                    text = "EUR, CHF"
+                )
+                Text(
+                    modifier = Modifier.padding(24.dp),
+                    text = "08/08/2024"
+                )
+            }
+        }
+        Text(
+            modifier = Modifier.padding(24.dp),
+            text = "1 USD = 0.88 EUR"
+        )
+        Text(
+            modifier = Modifier.padding(24.dp),
+            text = "1 USD = 0.92 CHF"
+        )
+    }
+}
+
