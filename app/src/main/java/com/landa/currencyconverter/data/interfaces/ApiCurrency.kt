@@ -9,7 +9,7 @@ interface ApiCurrency {
     @GET("/currencies")
     suspend fun getCurrenciesMap(): Map<String, String>
 
-    @GET("/latest?from={fromCurrency}")
-    suspend fun getCurrenciesFrom(@Path("fromCurrency") fromCurrency: String): Currency
+    @GET("/{date}?from={fromCurrency}")
+    suspend fun getCurrencyForExchange(@Path("date, fromCurrency") date: String, fromCurrency: String): Currency
 
 }

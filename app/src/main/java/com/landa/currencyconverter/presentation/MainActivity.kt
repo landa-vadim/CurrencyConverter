@@ -38,7 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -68,7 +67,7 @@ fun MyApp(context: Context, mainViewModel: MainViewModel) {
         startDestination = "main_screen"
     ) {
         composable("main_screen") { MainPage(context, mainViewModel, navController) }
-        composable("convert_result_screen") { ConvertResult() }
+        composable("convert_result_screen") { ConvertResult(mainViewModel) }
     }
 }
 
@@ -78,17 +77,19 @@ fun MainPage(context: Context, mainViewModel: MainViewModel, navController: NavC
     val calendar = Calendar.getInstance()
     calendar.time = Date()
     val year = calendar.get(Calendar.YEAR)
-    val month = calendar.get(Calendar.MONTH) + 1
+    val month = calendar.get(Calendar.MONTH)
     val day = calendar.get(Calendar.DAY_OF_MONTH)
 
-    val date = mainViewModel.todayDate.collectAsState()
+    val date = mainViewModel.exchangeDate.collectAsState()
 
     val currenciesList = mainViewModel.allCurrencies.collectAsState()
 
     val datePickerDialog = DatePickerDialog(
         context,
-        { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
-            mainViewModel.userPickDate("$dayOfMonth/$month/$year")
+        { _: DatePicker, year: Int, month: Int, day: Int ->
+            val actualMonth = if (month.toString().count() < 2) "0${month + 1}" else "${month + 1}"
+            val actualDay = if (day.toString().count() < 2) "0$day" else "$day"
+            mainViewModel.userPickDate("$actualDay.$actualMonth.$year")
         }, year, month, day
     )
 
@@ -249,9 +250,13 @@ fun MainPage(context: Context, mainViewModel: MainViewModel, navController: NavC
     }
 }
 
-@Preview
 @Composable
-fun ConvertResult() {
+fun ConvertResult(mainViewModel: MainViewModel) {
+
+    val fromCurrency = mainViewModel.fromCurrency.collectAsState()
+    val toCurrencies = mainViewModel.toCurrencies.collectAsState()
+    val date = mainViewModel.exchangeDate.collectAsState()
+    val resultList = mainViewModel.resultsList.collectAsState()
 
     Column {
         Row(
@@ -292,26 +297,24 @@ fun ConvertResult() {
             ) {
                 Text(
                     modifier = Modifier.padding(24.dp),
-                    text = "USD"
+                    text = fromCurrency.value
                 )
                 Text(
                     modifier = Modifier.padding(24.dp),
-                    text = "EUR, CHF"
+                    text = toCurrencies.value.joinToString { "" }
                 )
                 Text(
                     modifier = Modifier.padding(24.dp),
-                    text = "08/08/2024"
+                    text = date.value
                 )
             }
         }
-        Text(
-            modifier = Modifier.padding(24.dp),
-            text = "1 USD = 0.88 EUR"
-        )
-        Text(
-            modifier = Modifier.padding(24.dp),
-            text = "1 USD = 0.92 CHF"
-        )
+        resultList.value.forEach {
+            Text(
+                modifier = Modifier.padding(24.dp),
+                text = it
+            )
+        }
     }
 }
 
