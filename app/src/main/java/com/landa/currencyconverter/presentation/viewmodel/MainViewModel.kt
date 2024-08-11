@@ -10,12 +10,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Calendar
 
 class MainViewModel : ViewModel() {
 
     private val apiCurrencyRepository = ApiCurrencyRepository()
     private val _allCurrencies = MutableStateFlow(listOf(""))
     val allCurrencies = _allCurrencies.asStateFlow()
+    private val _allCurrenciesShortCut = MutableStateFlow(listOf<String>())
+    val allCurrenciesShortCut = _allCurrenciesShortCut.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -23,41 +26,85 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    val calendar = Calendar.getInstance()
+    val year = calendar.get(Calendar.YEAR)
+    val month = calendar.get(Calendar.MONTH)
+    val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+
+
     private val currentDate = LocalDateTime.now()
     private val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
-    private val _exchangeDate = MutableStateFlow(currentDate.format(formatter).toString())
-    val exchangeDate = _exchangeDate.asStateFlow()
+    private val _exchangeDateFlow = MutableStateFlow(currentDate.format(formatter).toString())
+    val exchangeDateFlow = _exchangeDateFlow.asStateFlow()
 
 
-    fun userPickDate(date: String) {
-        _exchangeDate.value = date
-    }
+    private val _fromCurrencyStringFlow = MutableStateFlow("EUR")
+    val fromCurrencyStringFlow = _fromCurrencyStringFlow.asStateFlow()
 
-    private val _fromCurrency = MutableStateFlow("EUR")
-    val fromCurrency = _fromCurrency.asStateFlow()
-    private val _toCurrencies = MutableStateFlow(listOf("All"))
-    val toCurrencies = _toCurrencies.asStateFlow()
-    private val _amount = MutableStateFlow(1)
-    val amount = _amount.asStateFlow()
+    private val _toCurrenciesEmptyListFlow = MutableStateFlow(listOf("All"))
+    val toCurrenciesEmptyListFlow = _toCurrenciesEmptyListFlow.asStateFlow()
+
+    private val _toCurrenciesListFlow = MutableStateFlow(mutableListOf<String>())
+    val toCurrenciesListFlow = _toCurrenciesListFlow.asStateFlow()
+
+    private val _amountStringFlow = MutableStateFlow("1")
+    val amountStringFlow = _amountStringFlow.asStateFlow()
 
     private val exchangeCurrency = mutableStateOf(Currency(1, "", "", mapOf()))
-    private val _resultsList = MutableStateFlow(listOf<String>())
-    val resultsList = _resultsList.asStateFlow()
 
-    fun userClickedConvert(fromCurrency: String, amount: Int) {
+    private val _resultsListFlow = MutableStateFlow(listOf<String>())
+    val resultsListFlow = _resultsListFlow.asStateFlow()
+
+    fun userPickDate(date: String) {
+        _exchangeDateFlow.value = date
+    }
+
+    fun userPickFromCurrency(currency: String) {
+        _fromCurrencyStringFlow.value = currency
+    }
+
+    fun userPickToCurrencies(currency: String) {
+        if (_toCurrenciesListFlow.value.contains(currency)) _toCurrenciesListFlow.value.remove(
+            currency
+        )
+        else _toCurrenciesListFlow.value.add(currency)
+
+    }
+
+    fun userPickAmount(amount: String) {
+        val amountInt = amount.toIntOrNull()
+        if (amountInt == null) return
+        else _amountStringFlow.value = amount
+    }
+
+    fun userClickedConvert() {
         viewModelScope.launch {
-            _amount.value = amount
-            val date = _exchangeDate.value.replace('.', '-')
-            val dateForApi =
-                "${date[7]}${date[8]}${date[9]}${date[10]}${date[3]}${date[4]}${date[5]}${date[6]}${date[1]}${date[2]}"
+            val amountValue = _amountStringFlow.value
+            val fromCurrencyValue = fromCurrencyStringFlow.value
+            val date = _exchangeDateFlow.value.replace('.', '-')
+            val dateForApiValue =
+                "${date[6]}${date[7]}${date[8]}${date[9]}${date[2]}${date[3]}${date[4]}${date[5]}${date[0]}${date[1]}"
             viewModelScope.launch {
-                exchangeCurrency.value =
-                    apiCurrencyRepository.getCurrencyForExchange(dateForApi, fromCurrency)
+                exchangeCurrency.value = if (_toCurrenciesListFlow.value.isEmpty()) {
+                    _allCurrenciesShortCut.value = _allCurrencies.value.map {
+                        it.removeRange(3, it.count())
+                    }
+                    apiCurrencyRepository.getCurrencyFromExchange(
+                        dateForApiValue,
+                        amountValue,
+                        fromCurrencyValue
+                    )
+                } else apiCurrencyRepository.getCurrencyFromToExchange(
+                    dateForApiValue,
+                    amountValue,
+                    fromCurrencyValue,
+                    _toCurrenciesListFlow.value.joinToString(",")
+                )
             }.join()
-            _resultsList.value = exchangeCurrency.value.rates.map {
-                "${_amount.value} ${it.key} = ${it.value*_amount.value}"
+            _resultsListFlow.value = exchangeCurrency.value.rates.map {
+                "${_amountStringFlow.value} ${_fromCurrencyStringFlow.value} = ${it.value * _amountStringFlow.value.toInt()} ${it.key}"
             }
         }
     }
-
 }

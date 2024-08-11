@@ -7,6 +7,7 @@ import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.widget.DatePicker
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -20,6 +21,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,19 +35,29 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.VerticalAlignmentLine
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.landa.currencyconverter.R
 import com.landa.currencyconverter.presentation.viewmodel.MainViewModel
 import java.util.Calendar
 import java.util.Date
@@ -50,6 +65,7 @@ import java.util.Date
 class MainActivity : ComponentActivity() {
 
     private val mainViewModel: MainViewModel by viewModels()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,47 +90,32 @@ fun MyApp(context: Context, mainViewModel: MainViewModel) {
 @Composable
 fun MainPage(context: Context, mainViewModel: MainViewModel, navController: NavController) {
 
-    val calendar = Calendar.getInstance()
-    calendar.time = Date()
-    val year = calendar.get(Calendar.YEAR)
-    val month = calendar.get(Calendar.MONTH)
-    val day = calendar.get(Calendar.DAY_OF_MONTH)
-
-    val date = mainViewModel.exchangeDate.collectAsState()
+    val date = mainViewModel.exchangeDateFlow.collectAsState()
 
     val currenciesList = mainViewModel.allCurrencies.collectAsState()
 
     val datePickerDialog = DatePickerDialog(
         context,
         { _: DatePicker, year: Int, month: Int, day: Int ->
-            val actualMonth = if (month.toString().count() < 2) "0${month + 1}" else "${month + 1}"
+            val actualMonth =
+                if ((month + 1).toString().count() < 2) "0${month + 1}" else "${month + 1}"
             val actualDay = if (day.toString().count() < 2) "0$day" else "$day"
             mainViewModel.userPickDate("$actualDay.$actualMonth.$year")
-        }, year, month, day
+        }, mainViewModel.year, mainViewModel.month, mainViewModel.day
     )
-
 
     var isExpandedFromCurrency by rememberSaveable {
         mutableStateOf(false)
     }
-
-    var fromCurrency by rememberSaveable {
-        mutableStateOf("EUR")
-    }
+    val fromCurrency = mainViewModel.fromCurrencyStringFlow.collectAsState()
 
     var isExpandedToCurrency by rememberSaveable {
         mutableStateOf(false)
     }
+    val toCurrencies = mainViewModel.toCurrenciesListFlow.collectAsState()
+    val toCurrencyEmpty = mainViewModel.toCurrenciesEmptyListFlow.collectAsState()
 
-    val toCurrencyEmpty by rememberSaveable {
-        mutableStateOf(listOf("All"))
-    }
-
-    val selectedToCurrencies = remember { mutableStateListOf<String>() }
-
-    var amount by rememberSaveable {
-        mutableStateOf("")
-    }
+    val amount = mainViewModel.amountStringFlow.collectAsState()
 
 // Общая колонка
     Column(
@@ -134,7 +135,7 @@ fun MainPage(context: Context, mainViewModel: MainViewModel, navController: NavC
             onExpandedChange = { isExpandedFromCurrency = it }) {
 // Текст внутри бокса выпадающего списка FROM CURRENCY
             TextField(
-                value = fromCurrency,
+                value = fromCurrency.value,
                 onValueChange = {},
                 readOnly = true,
                 trailingIcon = {
@@ -151,14 +152,15 @@ fun MainPage(context: Context, mainViewModel: MainViewModel, navController: NavC
             ) {
                 currenciesList.value
                     .filter {
-                        !toCurrencyEmpty.contains(it)
+                        !toCurrencies.value.contains(it)
                     }
                     .forEach {
 // Элемент выпадающего списка FROM CURRENCY
                         DropdownMenuItem(
                             text = { Text(text = it) },
                             onClick = {
-                                fromCurrency = it.removeRange(3, it.count())
+                                val shortCut = it.removeRange(3, it.count())
+                                mainViewModel.userPickFromCurrency(shortCut)
                                 isExpandedFromCurrency = false
                             },
                         )
@@ -173,19 +175,13 @@ fun MainPage(context: Context, mainViewModel: MainViewModel, navController: NavC
             onExpandedChange = { isExpandedToCurrency = it }) {
 // Текст внутри бокса выпадающего списка TO CURRENCY
             TextField(
-                value = if (selectedToCurrencies.isEmpty()) {
-                    Log.i("INSIDE BOX DROPDOWNMENU TOCURRENCY", "IF")
-                    toCurrencyEmpty.joinToString("")
+                value = if (toCurrencies.value.isEmpty()) {
+                    toCurrencyEmpty.value[0]
                 } else {
-                    Log.i("INSIDE BOX DROPDOWNMENU TOCURRENCY", "ELSE")
-                    selectedToCurrencies.joinToString(", ")
+                    toCurrencies.value.joinToString(", ")
                 },
                 onValueChange = {},
                 readOnly = true,
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpandedFromCurrency)
-                },
-                colors = ExposedDropdownMenuDefaults.textFieldColors(),
                 modifier = Modifier.menuAnchor()
             )
 // Выпадающий список TO CURRENCY
@@ -195,22 +191,16 @@ fun MainPage(context: Context, mainViewModel: MainViewModel, navController: NavC
                 modifier = Modifier.fillMaxHeight(0.4F)
             ) {
                 currenciesList.value
-                    .filter { it != fromCurrency }
+                    .filter { it != fromCurrency.value }
                     .forEach {
                         DropdownMenuItem(
 // Элемент выпадающего списка TO CURRENCY
                             text = { Text(text = it) },
                             onClick = {
                                 val shortCut = it.removeRange(3, it.count())
-                                if (shortCut in selectedToCurrencies) {
-                                    Log.i("ITEM DROPDOWNMENU TOCURRENCY", "IF")
-                                    selectedToCurrencies.remove(shortCut)
-                                } else {
-                                    Log.i("ITEM DROPDOWNMENU TOCURRENCY", "ELSE")
-                                    selectedToCurrencies.add(shortCut)
-                                }
+                                mainViewModel.userPickToCurrencies(shortCut)
                                 isExpandedToCurrency = true
-                            }
+                            },
                         )
                     }
             }
@@ -219,8 +209,11 @@ fun MainPage(context: Context, mainViewModel: MainViewModel, navController: NavC
         Text(text = "Amount")
 // Текст поля AMOUNT
         TextField(
-            value = amount,
-            onValueChange = { amount = it },
+            value = amount.value,
+            onValueChange = { mainViewModel.userPickAmount(it) },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number
+            )
         )
 // Тайтл поля DATE
         Text(text = "Date")
@@ -229,7 +222,10 @@ fun MainPage(context: Context, mainViewModel: MainViewModel, navController: NavC
             expanded = false,
             onExpandedChange = { },
             modifier = Modifier
-                .clickable { datePickerDialog.show() }
+                .clickable {
+                    datePickerDialog.datePicker.maxDate = mainViewModel.calendar.getTimeInMillis()
+                    datePickerDialog.show()
+                }
                 .fillMaxWidth()
                 .height(40.dp)
                 .background(Color.Gray)
@@ -244,7 +240,10 @@ fun MainPage(context: Context, mainViewModel: MainViewModel, navController: NavC
 // Кнопка CONVERT
         Button(
             modifier = Modifier.fillMaxWidth(),
-            onClick = { navController.navigate("convert_result_screen") },
+            onClick = {
+                navController.navigate("convert_result_screen")
+                mainViewModel.userClickedConvert()
+            },
             content = { Text(text = "Convert") }
         )
     }
@@ -253,68 +252,60 @@ fun MainPage(context: Context, mainViewModel: MainViewModel, navController: NavC
 @Composable
 fun ConvertResult(mainViewModel: MainViewModel) {
 
-    val fromCurrency = mainViewModel.fromCurrency.collectAsState()
-    val toCurrencies = mainViewModel.toCurrencies.collectAsState()
-    val date = mainViewModel.exchangeDate.collectAsState()
-    val resultList = mainViewModel.resultsList.collectAsState()
+    val allCurrencies = mainViewModel.allCurrenciesShortCut.collectAsState()
+    val fromCurrency = mainViewModel.fromCurrencyStringFlow.collectAsState()
+    val toCurrencies = mainViewModel.toCurrenciesListFlow.collectAsState()
+    val date = mainViewModel.exchangeDateFlow.collectAsState()
+    val resultList = mainViewModel.resultsListFlow.collectAsState()
 
-    Column {
-        Row(
+    Column(
+        modifier = Modifier
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(
             modifier = Modifier
-                .background(Color.Gray)
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
-            Text(
-                modifier = Modifier
-                    .background(Color.Red),
-                text = "CurrencyExchange"
-            )
-        }
-        Row {
-            Column(
-                modifier = Modifier
-                    .background(Color.Red)
-                    .padding(12.dp)
-            ) {
-                Text(
-                    modifier = Modifier.padding(24.dp),
-                    text = "From Currency"
-                )
-                Text(
-                    modifier = Modifier.padding(24.dp),
-                    text = "To Currency"
-                )
-                Text(
-                    modifier = Modifier.padding(24.dp),
-                    text = "Date"
-                )
+                .padding(24.dp),
+            text = "CurrencyExchange",
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp
+        )
+        RowForResults("From Currency", fromCurrency.value)
+        RowForResults(
+            "To Currency", if (toCurrencies.value.isEmpty()) {
+                allCurrencies.value.toString().removeSurrounding("[", "]")
+            } else {
+                toCurrencies.value.toString().removeSurrounding("[", "]")
             }
-            Column(
-                modifier = Modifier
-                    .background(Color.Green)
-                    .padding(12.dp)
-            ) {
-                Text(
-                    modifier = Modifier.padding(24.dp),
-                    text = fromCurrency.value
-                )
-                Text(
-                    modifier = Modifier.padding(24.dp),
-                    text = toCurrencies.value.joinToString { "" }
-                )
-                Text(
-                    modifier = Modifier.padding(24.dp),
-                    text = date.value
-                )
-            }
-        }
+        )
+        RowForResults("Date", date.value)
         resultList.value.forEach {
             Text(
                 modifier = Modifier.padding(24.dp),
                 text = it
             )
         }
+    }
+}
+
+@Composable
+fun RowForResults(title: String, result: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            modifier = Modifier
+                .padding(24.dp)
+                .width(100.dp),
+
+            text = title
+        )
+        Text(
+            modifier = Modifier.padding(24.dp),
+            text = result
+        )
     }
 }
 

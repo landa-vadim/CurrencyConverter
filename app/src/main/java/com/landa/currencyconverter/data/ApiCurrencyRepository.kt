@@ -25,9 +25,12 @@ class ApiCurrencyRepository : CurrencyRepository {
         }
     }
 
-    override suspend fun getCurrencyForExchange(date: String, fromCurrency: String): Currency {
-        return apiCurrency.getCurrencyForExchange(date, fromCurrency)
+    override suspend fun getCurrencyFromToExchange(date: String, amount: String, fromCurrency: String, toCurrencies: String): Currency {
+        return apiCurrency.getCurrencyFromToExchange(date, amount, fromCurrency, toCurrencies)
     }
 
+    override suspend fun getCurrencyFromExchange(date: String, amount: String, fromCurrency: String): Currency {
+        return apiCurrency.getCurrencyFromExchange(date, amount, fromCurrency)
+    }
 
 }

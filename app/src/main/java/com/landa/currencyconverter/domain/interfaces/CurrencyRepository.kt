@@ -1,15 +1,14 @@
 package com.landa.currencyconverter.domain.interfaces
 
 import com.landa.currencyconverter.domain.model.Currency
-import retrofit2.http.Path
 
 interface CurrencyRepository {
 
     suspend fun getCurrenciesList(): List<String>
 
-    suspend fun getCurrencyForExchange(date: String, fromCurrency: String): Currency
+    suspend fun getCurrencyFromToExchange(date: String, amount: String, fromCurrency: String, toCurrencies: String): Currency
 
-
+    suspend fun getCurrencyFromExchange(date: String, amount: String, fromCurrency: String): Currency
 
 
 }
