@@ -45,7 +45,7 @@ class MainViewModel : ViewModel() {
     private val _toCurrenciesEmptyListFlow = MutableStateFlow(listOf("All"))
     val toCurrenciesEmptyListFlow = _toCurrenciesEmptyListFlow.asStateFlow()
 
-    private val _toCurrenciesListFlow = MutableStateFlow(mutableListOf<String>())
+    private val _toCurrenciesListFlow = MutableStateFlow(listOf<String>())
     val toCurrenciesListFlow = _toCurrenciesListFlow.asStateFlow()
 
     private val _amountStringFlow = MutableStateFlow("1")
@@ -65,11 +65,10 @@ class MainViewModel : ViewModel() {
     }
 
     fun userPickToCurrencies(currency: String) {
-        if (_toCurrenciesListFlow.value.contains(currency)) _toCurrenciesListFlow.value.remove(
-            currency
-        )
-        else _toCurrenciesListFlow.value.add(currency)
-
+        val list = _toCurrenciesListFlow.value.toMutableList()
+        if (list.contains(currency)) list.remove(currency)
+        else list.add(currency)
+        _toCurrenciesListFlow.value = list.toList()
     }
 
     fun userPickAmount(amount: String) {
@@ -103,7 +102,7 @@ class MainViewModel : ViewModel() {
                 )
             }.join()
             _resultsListFlow.value = exchangeCurrency.value.rates.map {
-                "${_amountStringFlow.value} ${_fromCurrencyStringFlow.value} = ${it.value * _amountStringFlow.value.toInt()} ${it.key}"
+                "${_amountStringFlow.value} ${_fromCurrencyStringFlow.value} = ${String.format("%.2f", (it.value * _amountStringFlow.value.toInt()))} ${it.key}"
             }
         }
     }
