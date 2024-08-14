@@ -8,13 +8,18 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.landa.currencyconverter.di.DaggerDaggerComponent
 import com.landa.currencyconverter.presentation.viewmodel.MainViewModel
 import jakarta.inject.Inject
 
-class MainActivity @Inject constructor(private val mainViewModel: MainViewModel) : ComponentActivity() {
+class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var mainViewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        mainViewModel = DaggerDaggerComponent.create().getMainViewModel()
         setContent {
             MyApp(this, mainViewModel)
         }
