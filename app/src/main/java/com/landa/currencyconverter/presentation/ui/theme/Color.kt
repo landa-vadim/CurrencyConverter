@@ -1,4 +1,4 @@
-package com.landa.currencyconverter.ui.theme
+package com.landa.currencyconverter.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

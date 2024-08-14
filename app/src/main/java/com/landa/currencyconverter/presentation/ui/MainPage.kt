@@ -1,4 +1,4 @@
-package com.landa.currencyconverter.presentation
+package com.landa.currencyconverter.presentation.ui
 
 import android.app.DatePickerDialog
 import android.content.Context

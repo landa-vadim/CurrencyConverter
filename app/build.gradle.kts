@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.devtools.ksp)
 }
 
 android {
@@ -66,6 +67,8 @@ dependencies {
     implementation(libs.androidx.navigation)
     implementation(libs.squareup.okhttp3)
     implementation(libs.squareup.okhttp3.interceptor)
+    ksp(libs.dagger.compiler)
+    implementation(libs.dagger.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

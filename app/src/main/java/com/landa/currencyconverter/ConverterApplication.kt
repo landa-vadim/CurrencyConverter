@@ -1,7 +1,6 @@
 package com.landa.currencyconverter
 
 import android.app.Application
+import jakarta.inject.Inject
 
-class ConverterApplication: Application() {
-
-}
+class ConverterApplication @Inject constructor() : Application()

@@ -1,5 +1,5 @@
 [versions]
-agp = "8.5.1"
+agp = "8.5.2"
 kotlin = "2.0.0"
 coreKtx = "1.13.1"
 junit = "4.13.2"
@@ -12,6 +12,8 @@ retrofit2 = "2.11.0"
 googleCodeGson = "2.11.0"
 navigation = "2.7.7"
 okhttp3 = "4.12.0"
+ksp = "2.0.10-1.0.24"
+dagger = "2.52"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -34,9 +36,12 @@ google-code-gson = {group = "com.google.code.gson", name = "gson", version.ref =
 androidx-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation"}
 squareup-okhttp3-interceptor = {group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp3" }
 squareup-okhttp3 = {group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp3" }
+dagger-compiler = {group = "com.google.dagger", name = "dagger-compiler", version.ref = "dagger"}
+dagger-core = {group = "com.google.dagger", name = "dagger", version.ref = "dagger"}
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp"}
 

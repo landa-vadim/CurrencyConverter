@@ -1,4 +1,4 @@
-package com.landa.currencyconverter.presentation
+package com.landa.currencyconverter.presentation.ui
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth

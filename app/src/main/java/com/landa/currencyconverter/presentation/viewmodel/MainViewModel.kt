@@ -3,8 +3,9 @@ package com.landa.currencyconverter.presentation.viewmodel
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.landa.currencyconverter.data.ApiCurrencyRepository
+import com.landa.currencyconverter.di.DaggerDaggerComponent
 import com.landa.currencyconverter.domain.model.Currency
+import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -12,9 +13,9 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 
-class MainViewModel : ViewModel() {
+class MainViewModel @Inject constructor() : ViewModel() {
 
-    private val apiCurrencyRepository = ApiCurrencyRepository()
+    private val apiCurrencyRepository = DaggerDaggerComponent.create().getApiCurrencyRepository()
     private val _allCurrencies = MutableStateFlow(listOf(""))
     val allCurrencies = _allCurrencies.asStateFlow()
     private val _allCurrenciesShortCut = MutableStateFlow(listOf<String>())
@@ -30,7 +31,6 @@ class MainViewModel : ViewModel() {
     val year = calendar.get(Calendar.YEAR)
     val month = calendar.get(Calendar.MONTH)
     val day = calendar.get(Calendar.DAY_OF_MONTH)
-
 
 
     private val currentDate = LocalDateTime.now()
@@ -102,7 +102,12 @@ class MainViewModel : ViewModel() {
                 )
             }.join()
             _resultsListFlow.value = exchangeCurrency.value.rates.map {
-                "${_amountStringFlow.value} ${_fromCurrencyStringFlow.value} = ${String.format("%.2f", (it.value * _amountStringFlow.value.toInt()))} ${it.key}"
+                "${_amountStringFlow.value} ${_fromCurrencyStringFlow.value} = ${
+                    String.format(
+                        "%.2f",
+                        (it.value * _amountStringFlow.value.toInt())
+                    )
+                } ${it.key}"
             }
         }
     }
