@@ -3,6 +3,7 @@ package com.landa.currencyconverter.presentation.viewmodel
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.landa.currencyconverter.data.ApiCurrencyRepository
 import com.landa.currencyconverter.di.DaggerDaggerComponent
 import com.landa.currencyconverter.domain.model.Currency
 import jakarta.inject.Inject
@@ -13,9 +14,8 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 
-class MainViewModel @Inject constructor() : ViewModel() {
+class MainViewModel @Inject constructor(private val apiCurrencyRepository: ApiCurrencyRepository) : ViewModel() {
 
-    private val apiCurrencyRepository = DaggerDaggerComponent.create().getApiCurrencyRepository()
     private val _allCurrencies = MutableStateFlow(listOf(""))
     val allCurrencies = _allCurrencies.asStateFlow()
     private val _allCurrenciesShortCut = MutableStateFlow(listOf<String>())
