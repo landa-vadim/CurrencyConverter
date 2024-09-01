@@ -5,15 +5,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.landa.currencyconverter.data.ApiCurrencyRepository
 import com.landa.currencyconverter.domain.model.Currency
-import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
+import javax.inject.Inject
 
-class MainViewModel(private val apiCurrencyRepository: ApiCurrencyRepository) : ViewModel() {
+class MainViewModel @Inject constructor(private val apiCurrencyRepository: ApiCurrencyRepository) : ViewModel() {
 
     private val _allCurrencies = MutableStateFlow(listOf(""))
     val allCurrencies = _allCurrencies.asStateFlow()
@@ -31,12 +31,10 @@ class MainViewModel(private val apiCurrencyRepository: ApiCurrencyRepository) : 
     val month = calendar.get(Calendar.MONTH)
     val day = calendar.get(Calendar.DAY_OF_MONTH)
 
-
     private val currentDate = LocalDateTime.now()
     private val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
     private val _exchangeDateFlow = MutableStateFlow(currentDate.format(formatter).toString())
     val exchangeDateFlow = _exchangeDateFlow.asStateFlow()
-
 
     private val _fromCurrencyStringFlow = MutableStateFlow("EUR")
     val fromCurrencyStringFlow = _fromCurrencyStringFlow.asStateFlow()
@@ -101,12 +99,7 @@ class MainViewModel(private val apiCurrencyRepository: ApiCurrencyRepository) : 
                 )
             }.join()
             _resultsListFlow.value = exchangeCurrency.value.rates.map {
-                "${_amountStringFlow.value} ${_fromCurrencyStringFlow.value} = ${
-                    String.format(
-                        "%.2f",
-                        (it.value * _amountStringFlow.value.toInt())
-                    )
-                } ${it.key}"
+                "${_amountStringFlow.value} ${_fromCurrencyStringFlow.value} = ${String.format("%.2f", (it.value * _amountStringFlow.value.toInt()))} ${it.key}"
             }
         }
     }

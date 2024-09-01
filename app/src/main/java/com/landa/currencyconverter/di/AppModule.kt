@@ -1,26 +1,32 @@
 package com.landa.currencyconverter.di
 
-import com.landa.currencyconverter.ConverterApplication
-import com.landa.currencyconverter.data.ApiCurrencyRepository
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.landa.currencyconverter.presentation.viewmodel.MainViewModel
+import dagger.Binds
+import dagger.MapKey
 import dagger.Module
-import dagger.Provides
+import dagger.multibindings.IntoMap
+import javax.inject.Inject
+import javax.inject.Provider
+import kotlin.reflect.KClass
+
+@MapKey
+@Retention(AnnotationRetention.RUNTIME)
+annotation class ViewModelKey(val value: KClass<out ViewModel>)
 
 @Module
-object AppModule {
+interface MainViewModelMultiBinder {
+    @Binds
+    @IntoMap
+    @ViewModelKey(MainViewModel::class)
+    fun provideMainViewModel(viewModel: MainViewModel): ViewModel
+}
 
-    @Provides
-    fun provideMainViewModel(
-        currencyRepository: ApiCurrencyRepository,
-    ): MainViewModel {
-        return MainViewModel(
-            apiCurrencyRepository = currencyRepository
-        )
+class DaggerViewModelFactory @Inject constructor(
+    private val viewModelProviders: Map<Class<out ViewModel>, Provider<ViewModel>>
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return viewModelProviders[modelClass]?.get() as T
     }
-
-    @Provides
-    fun provideApplication(): ConverterApplication {
-        return ConverterApplication()
-    }
-
 }
